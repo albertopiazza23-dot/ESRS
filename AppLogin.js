@@ -1,7 +1,13 @@
 import React, { useState } from 'react';
-import { User, Lock, Globe, Eye, EyeOff, LogIn, Target } from 'lucide-react';
+import { User, Lock, Globe, Eye, EyeOff, LogIn, Target, BarChart3, Shield, TrendingUp, FileText } from 'lucide-react';
 
-const LoginPage = () => {
+// Import your existing dashboard components
+import ESRSDashboard from './ESRSDashboard.js';
+import SOPDashbaord from './SOPDashbaord.js';
+import GDPRRMDashboard from './GDPRRMDashboard.js';
+import IFRSPortal from './IFRSPortal.js';
+
+const MasterplanApp = () => {
   const [credentials, setCredentials] = useState({
     username: '',
     password: ''
@@ -10,12 +16,15 @@ const LoginPage = () => {
   const [selectedLanguage, setSelectedLanguage] = useState('en');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [currentUser, setCurrentUser] = useState(null);
+  const [successMessage, setSuccessMessage] = useState('');
+  const [currentView, setCurrentView] = useState('login');
 
   const applications = [
-    { code: 'IFRS', name: 'IFRS - Accounting Principles', color: 'bg-blue-500' },
-    { code: 'ESRS', name: 'ESRS - Sustainability Reporting', color: 'bg-green-500' },
-    { code: 'GDPR', name: 'GDPR & RM - Risk Management', color: 'bg-red-500' },
-    { code: 'SOP', name: 'S&OP - Sales and Operational Planning', color: 'bg-purple-500' }
+    { code: 'IFRS', name: 'IFRS - Accounting Principles', color: 'bg-blue-500', file: 'IFRSPortal.js', icon: FileText, description: 'Accounting Principles' },
+    { code: 'ESRS', name: 'ESRS - Sustainability Reporting', color: 'bg-green-500', file: 'ESRSDashboard.js', icon: TrendingUp, description: 'Sustainability Reporting' },
+    { code: 'GDPR', name: 'GDPR & RM - Risk Management', color: 'bg-red-500', file: 'GDPRRMDashboard.js', icon: Shield, description: 'Risk Management' },
+    { code: 'SOP', name: 'S&OP - Sales and Operational Planning', color: 'bg-purple-500', file: 'SOPDashboard.js', icon: BarChart3, description: 'Sales and Operational' }
   ];
 
   const dummyUsers = [
@@ -42,6 +51,17 @@ const LoginPage = () => {
     if (error) setError('');
   };
 
+  const handleAppSelect = (appCode) => {
+    const app = applications.find(a => a.code === appCode);
+    if (app) {
+      setSuccessMessage('Opening ' + app.description + '...');
+      setTimeout(() => {
+        setCurrentView(appCode.toLowerCase());
+        setSuccessMessage('');
+      }, 1500);
+    }
+  };
+
   const handleLogin = () => {
     setIsLoading(true);
     setError('');
@@ -52,12 +72,26 @@ const LoginPage = () => {
       );
 
       if (user) {
-        alert('Welcome ' + user.name + '!\n\nAvailable applications:\n' + user.apps.join(', '));
+        setCurrentUser(user);
+        setSuccessMessage('Welcome ' + user.name + '! Click on an available application to continue.');
+        setTimeout(() => setSuccessMessage(''), 4000);
       } else {
         setError('Invalid username or password');
       }
       setIsLoading(false);
     }, 1500);
+  };
+
+  const handleLogout = () => {
+    setCurrentUser(null);
+    setCurrentView('login');
+    setCredentials({ username: '', password: '' });
+    setError('');
+    setSuccessMessage('');
+  };
+
+  const handleBackToLogin = () => {
+    setCurrentView('login');
   };
 
   const MasterplanLogo = () => (
@@ -80,7 +114,7 @@ const LoginPage = () => {
     </div>
   );
 
-  return (
+  const LoginPage = () => (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800 flex items-center justify-center px-4">
       <div className="absolute inset-0 bg-opacity-10" style={{backgroundImage: "url('data:image/svg+xml,%3Csvg width=\"60\" height=\"60\" viewBox=\"0 0 60 60\" xmlns=\"http://www.w3.org/2000/svg\"%3E%3Cg fill=\"none\" fill-rule=\"evenodd\"%3E%3Cg fill=\"%239C92AC\" fill-opacity=\"0.05\"%3E%3Cpath d=\"M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\"%2F%3E%3C%2Fg%3E%3C%2Fg%3E%3C%2Fsvg%3E')"}}></div>
 
@@ -113,6 +147,12 @@ const LoginPage = () => {
           {error && (
             <div className="mb-6 p-4 bg-red-500 bg-opacity-20 border border-red-500 border-opacity-30 rounded-lg">
               <p className="text-red-200 text-sm text-center">{error}</p>
+            </div>
+          )}
+
+          {successMessage && (
+            <div className="mb-6 p-4 bg-green-500 bg-opacity-20 border border-green-500 border-opacity-30 rounded-lg">
+              <p className="text-green-200 text-sm text-center">{successMessage}</p>
             </div>
           )}
 
@@ -193,17 +233,38 @@ const LoginPage = () => {
 
           <div className="mt-6 text-center">
             <p className="text-white text-opacity-60 text-sm mb-3">Available Applications</p>
-            <div className="flex justify-center space-x-2 flex-wrap gap-2">
-              {applications.map((app) => (
-                <div
-                  key={app.code}
-                  className={app.code + '-badge px-3 py-1 rounded-full text-white text-xs font-medium opacity-80'}
-                  style={{backgroundColor: app.code === 'IFRS' ? '#3b82f6' : app.code === 'ESRS' ? '#10b981' : app.code === 'GDPR' ? '#ef4444' : '#8b5cf6'}}
-                  title={app.name}
-                >
-                  {app.code}
-                </div>
-              ))}
+            <div className="grid grid-cols-2 gap-3">
+              {applications.map((app) => {
+                const IconComponent = app.icon;
+                const isAccessible = currentUser ? currentUser.apps.includes(app.code) : false;
+                const isDisabled = !isAccessible;
+                
+                return (
+                  <button
+                    key={app.code}
+                    onClick={() => isAccessible && handleAppSelect(app.code)}
+                    disabled={isDisabled}
+                    className={`p-3 rounded-lg border-2 transition-all duration-200 flex flex-col items-center space-y-2 text-center ${
+                      isAccessible 
+                        ? 'border-white border-opacity-30 bg-white bg-opacity-10 hover:bg-opacity-20 hover:border-opacity-50 cursor-pointer' 
+                        : 'border-gray-500 border-opacity-30 bg-gray-700 bg-opacity-30 cursor-not-allowed opacity-50'
+                    }`}
+                    title={isAccessible ? app.name : 'Access not authorized'}
+                  >
+                    <div className={`p-2 rounded ${isAccessible ? app.color : 'bg-gray-600'}`}>
+                      <IconComponent className="w-4 h-4 text-white" />
+                    </div>
+                    <div>
+                      <p className={`text-xs font-medium ${isAccessible ? 'text-white' : 'text-gray-400'}`}>
+                        {app.code}
+                      </p>
+                      <p className={`text-xs ${isAccessible ? 'text-white text-opacity-70' : 'text-gray-500'}`}>
+                        {app.description}
+                      </p>
+                    </div>
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>
@@ -216,6 +277,117 @@ const LoginPage = () => {
       </div>
     </div>
   );
+
+  const renderCurrentView = () => {
+    switch (currentView) {
+      case 'login':
+        return <LoginPage />;
+      case 'esrs':
+        return (
+          <div className="min-h-screen bg-gray-50">
+            <div className="bg-white shadow-sm border-b p-4 mb-6">
+              <div className="flex justify-between items-center max-w-7xl mx-auto">
+                <h1 className="text-xl font-bold text-gray-900">ESRS Dashboard</h1>
+                <div className="space-x-4">
+                  <button
+                    onClick={handleBackToLogin}
+                    className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 text-sm"
+                  >
+                    Back to Login
+                  </button>
+                  <button
+                    onClick={handleLogout}
+                    className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 text-sm"
+                  >
+                    Logout ({currentUser?.name})
+                  </button>
+                </div>
+              </div>
+            </div>
+            <ESRSDashboard user={currentUser} onLogout={handleLogout} onBack={handleBackToLogin} />
+          </div>
+        );
+      case 'sop':
+        return (
+          <div className="min-h-screen bg-gray-50">
+            <div className="bg-white shadow-sm border-b p-4 mb-6">
+              <div className="flex justify-between items-center max-w-7xl mx-auto">
+                <h1 className="text-xl font-bold text-gray-900">S&OP Dashboard</h1>
+                <div className="space-x-4">
+                  <button
+                    onClick={handleBackToLogin}
+                    className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 text-sm"
+                  >
+                    Back to Login
+                  </button>
+                  <button
+                    onClick={handleLogout}
+                    className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 text-sm"
+                  >
+                    Logout ({currentUser?.name})
+                  </button>
+                </div>
+              </div>
+            </div>
+            <SOPDashbaord user={currentUser} onLogout={handleLogout} onBack={handleBackToLogin} />
+          </div>
+        );
+      case 'gdpr':
+        return (
+          <div className="min-h-screen bg-gray-50">
+            <div className="bg-white shadow-sm border-b p-4 mb-6">
+              <div className="flex justify-between items-center max-w-7xl mx-auto">
+                <h1 className="text-xl font-bold text-gray-900">GDPR & Risk Management</h1>
+                <div className="space-x-4">
+                  <button
+                    onClick={handleBackToLogin}
+                    className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 text-sm"
+                  >
+                    Back to Login
+                  </button>
+                  <button
+                    onClick={handleLogout}
+                    className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 text-sm"
+                  >
+                    Logout ({currentUser?.name})
+                  </button>
+                </div>
+              </div>
+            </div>
+            <GDPRRMDashboard user={currentUser} onLogout={handleLogout} onBack={handleBackToLogin} />
+          </div>
+        );
+      case 'ifrs':
+        return (
+          <div className="min-h-screen bg-gray-50">
+            <div className="bg-white shadow-sm border-b p-4 mb-6">
+              <div className="flex justify-between items-center max-w-7xl mx-auto">
+                <h1 className="text-xl font-bold text-gray-900">IFRS Portal</h1>
+                <div className="space-x-4">
+                  <button
+                    onClick={handleBackToLogin}
+                    className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 text-sm"
+                  >
+                    Back to Login
+                  </button>
+                  <button
+                    onClick={handleLogout}
+                    className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 text-sm"
+                  >
+                    Logout ({currentUser?.name})
+                  </button>
+                </div>
+              </div>
+            </div>
+            <IFRSPortal user={currentUser} onLogout={handleLogout} onBack={handleBackToLogin} />
+          </div>
+        );
+      default:
+        return <LoginPage />;
+    }
+  };
+
+  return renderCurrentView();
 };
 
-export default LoginPage;
+export default MasterplanApp;
